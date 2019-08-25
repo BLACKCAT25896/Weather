@@ -11,13 +11,18 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
+import com.example.weather.common.Common;
 import com.example.weather.databinding.FragmentCityBinding;
+import com.example.weather.model.WeatherResult;
 import com.example.weather.retrofit.IOpenWeatherMap;
 import com.example.weather.retrofit.RetrofitClient;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.label305.asynctask.SimpleAsyncTask;
+import com.mancj.materialsearchbar.MaterialSearchBar;
+import com.squareup.picasso.Picasso;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,7 +32,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 import retrofit2.Retrofit;
 
 
@@ -127,6 +135,94 @@ public class CityFragment extends Fragment {
 
                 }
             });
+            binding.cityNameSearchBar.setOnSearchActionListener(new MaterialSearchBar.OnSearchActionListener() {
+                @Override
+                public void onSearchStateChanged(boolean enabled) {
+
+                }
+
+                @Override
+                public void onSearchConfirmed(CharSequence text) {
+                    getWeatherInformation(text.toString());
+                    binding.cityNameSearchBar.setLastSuggestions(cityList);
+
+                }
+
+                @Override
+                public void onButtonClicked(int buttonCode) {
+
+                }
+            });
+
+            binding.cityNameSearchBar.setLastSuggestions(cityList);
+            binding.loading.setVisibility(View.GONE);
+            binding.weatherPanel.setVisibility(View.VISIBLE);
+
+
+
         }
+    }
+
+    private void getWeatherInformation(String cityName) {
+
+
+        compositeDisposable.add(weatherMap.getWeatherByCityName(cityName,
+                Common.APP_ID,
+                "metric")
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<WeatherResult>() {
+                    @Override
+                    public void accept(WeatherResult weatherResult) throws Exception {
+
+                        Picasso.get().load(new StringBuilder("https://openweathermap.org/img/w/")
+                                .append(weatherResult.getWeather().get(0).getIcon())
+                                .append(".png").toString()).into(binding.imageWeather);
+
+                        binding.txtCityName.setText(weatherResult.getName());
+                        binding.description.setText(new StringBuilder("Weather in ")
+                                .append(weatherResult.getName()).toString());
+                        binding.temperature.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getTemp())).append("°C").toString());
+                        binding.txtDateTime.setText(Common.convertUnixToDate(weatherResult.getDt()));
+                        binding.txtPressure.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getPressure())).append(" hpa").toString());
+                        binding.txtHumidity.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getHumidity())).append(" %").toString());
+                        binding.txtSunrise.setText(Common.convertUnixToHour(weatherResult.getSys().getSunrise()));
+                        binding.txtSunset.setText(Common.convertUnixToHour(weatherResult.getSys().getSunset()));
+                        binding.txtGeoCoord.setText(new StringBuilder(weatherResult.getCoord().toString()).toString());
+
+
+                        binding.weatherPanel.setVisibility(View.VISIBLE);
+                        binding.loading.setVisibility(View.GONE);
+
+
+
+
+
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        Toast.makeText(getContext(), ""+throwable.getMessage(), Toast.LENGTH_SHORT).show();
+
+                    }
+                })
+        );
+
+
+
+
+
+    }
+
+    @Override
+    public void onDestroy() {
+        compositeDisposable.clear();
+        super.onDestroy();
+    }
+
+    @Override
+    public void onStop() {
+        compositeDisposable.clear();
+        super.onStop();
     }
 }

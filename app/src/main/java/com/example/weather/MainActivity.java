@@ -101,7 +101,9 @@ public class MainActivity extends AppCompatActivity {
         ViewPagweAdapter adapter = new ViewPagweAdapter(getSupportFragmentManager());
         adapter.addFragment(TodayWeatherFragment.getInstance(),"Today");
         adapter.addFragment(ForecastFragment.getInstanse(),"5 Days");
-        binding.viewPager.setAdapter(adapter);
+        adapter.addFragment(CityFragment.getInstance(),"Cities");
+
+        viewPager.setAdapter(adapter);
 
     }
 
