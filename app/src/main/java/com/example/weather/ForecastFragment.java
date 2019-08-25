@@ -27,9 +27,6 @@ import io.reactivex.schedulers.Schedulers;
 import retrofit2.Retrofit;
 
 
-/**
- * A simple {@link Fragment} subclass.
- */
 public class ForecastFragment extends Fragment {
     private FragmentForecastBinding binding;
     CompositeDisposable compositeDisposable;
