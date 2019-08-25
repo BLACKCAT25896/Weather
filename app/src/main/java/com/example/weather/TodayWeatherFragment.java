@@ -63,7 +63,7 @@ public class TodayWeatherFragment extends Fragment {
     private void getWeatherInfo() {
 
 
-        compositeDisposable.add(weatherMap.getWeatherByLatLng(String.valueOf(Common.current_location),
+        compositeDisposable.add(weatherMap.getWeatherByLatLng(String.valueOf(Common.current_location.getLatitude()),
                 String.valueOf(Common.current_location.getLongitude()),
                 Common.APP_ID,
                 "metric")
@@ -72,20 +72,21 @@ public class TodayWeatherFragment extends Fragment {
         .subscribe(new Consumer<WeatherResult>() {
             @Override
             public void accept(WeatherResult weatherResult) throws Exception {
-                //load Image
-                Picasso.get().load(new StringBuilder("https://openweathermap.org/img/wn/")
+
+                Picasso.get().load(new StringBuilder("https://openweathermap.org/img/w/")
                         .append(weatherResult.getWeather().get(0).getIcon())
-                .append(".png").toString()).into(binding.weatherImage);
+                .append(".png").toString()).into(binding.imageWeather);
+
                 binding.txtCityName.setText(weatherResult.getName());
                 binding.description.setText(new StringBuilder("Weather in ")
                         .append(weatherResult.getName()).toString());
                 binding.temperature.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getTemp())).append("°C").toString());
                 binding.txtDateTime.setText(Common.convertUnixToDate(weatherResult.getDt()));
                 binding.txtPressure.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getPressure())).append(" hpa").toString());
-                binding.txtHumidity.setText(new StringBuilder(weatherResult.getMain().getHumidity()).append(" %").toString());
+                binding.txtHumidity.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getHumidity())).append(" %").toString());
                 binding.txtSunrise.setText(Common.convertUnixToHour(weatherResult.getSys().getSunrise()));
                 binding.txtSunset.setText(Common.convertUnixToHour(weatherResult.getSys().getSunset()));
-                binding.txtGeoCoord.setText(new StringBuilder("[").append(weatherResult.getCoord().toString()).append("]").toString());
+                binding.txtGeoCoord.setText(new StringBuilder(weatherResult.getCoord().toString()).toString());
 
 
                 binding.weatherPanel.setVisibility(View.VISIBLE);
@@ -106,4 +107,9 @@ public class TodayWeatherFragment extends Fragment {
         );
     }
 
+    @Override
+    public void onStop() {
+        compositeDisposable.clear();
+        super.onStop();
+    }
 }
